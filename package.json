@@ -34,16 +34,16 @@
     "migrations",
     "artisan"
   ],
-  "author": "Your Name <your.email@example.com>",
+  "author": "Arslan Rana <arslanbht@example.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/noderex.git"
+    "url": "https://github.com/arslanbht/noderex.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/noderex/issues"
+    "url": "https://github.com/arslanbht/noderex/issues"
   },
-  "homepage": "https://github.com/your-username/noderex#readme",
+  "homepage": "https://github.com/arslanbht/noderex#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "chalk": "^4.1.2",
