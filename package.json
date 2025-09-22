@@ -9,6 +9,7 @@
   },
   "files": [
     "dist/**/*",
+    "src/cli/stubs/**/*",
     "templates/**/*",
     "README.md",
     "LICENSE",

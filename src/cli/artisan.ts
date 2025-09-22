@@ -107,10 +107,20 @@ abstract class BaseCommand {
   }
 
   protected getStub(stubName: string): string {
-    const stubPath = path.join(__dirname, 'stubs', `${stubName}.stub`);
-    if (fs.existsSync(stubPath)) {
-      return fs.readFileSync(stubPath, 'utf8');
+    // Try to find stubs in the noderex package
+    const possiblePaths = [
+      path.join(__dirname, 'stubs', `${stubName}.stub`),
+      path.join(process.cwd(), 'node_modules', 'noderex', 'dist', 'cli', 'stubs', `${stubName}.stub`),
+      path.join(process.cwd(), 'node_modules', 'noderex', 'src', 'cli', 'stubs', `${stubName}.stub`)
+    ];
+
+    for (const stubPath of possiblePaths) {
+      if (fs.existsSync(stubPath)) {
+        return fs.readFileSync(stubPath, 'utf8');
+      }
     }
+    
+    this.error(`Stub file '${stubName}.stub' not found!`);
     return '';
   }
 
