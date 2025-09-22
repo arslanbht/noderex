@@ -87,12 +87,12 @@ class ProjectCreator {
       version: "1.0.0",
       description: `A NodeRex application - ${this.projectName}`,
       main: "dist/index.js",
-      scripts: {
-        build: "tsc",
-        dev: "ts-node src/index.ts",
-        start: "node dist/index.js",
-        artisan: "ts-node src/cli/artisan.ts"
-      },
+        scripts: {
+          build: "tsc",
+          dev: "ts-node src/index.ts",
+          start: "node dist/index.js",
+          artisan: "node-artisan"
+        },
       keywords: ["noderex", "api", "mvc", "typescript"],
       author: "",
       license: "MIT",
@@ -250,15 +250,20 @@ RATE_LIMIT_MAX=100`;
    * Create basic project files
    */
   private createBasicFiles(): void {
-    // Create main index.ts
-    const indexContent = `import 'reflect-metadata';
+      // Create main index.ts
+      const indexContent = `import 'reflect-metadata';
 import { NodeRexApplication } from 'noderex';
+import { setupRoutes } from './routes/web';
 
 // Create and start the application
 const app = new NodeRexApplication();
+
+// Setup routes
+setupRoutes(app.getRouter());
+
 app.start().catch(console.error);`;
 
-    fs.writeFileSync(path.join(this.projectPath, 'src', 'index.ts'), indexContent);
+      fs.writeFileSync(path.join(this.projectPath, 'src', 'index.ts'), indexContent);
 
     // Create basic routes
     const routesContent = `import { Router } from 'noderex';
@@ -318,6 +323,8 @@ A NodeRex application.
 - \`npm run artisan make:migration <name>\` - Create a new migration
 - \`npm run artisan make:request <name>\` - Create a new request class
 - \`npm run artisan make:resource <name>\` - Create a new resource class
+- \`npm run artisan route:list\` - List all routes
+- \`npm run artisan migrate\` - Run database migrations
 
 ## Documentation
 

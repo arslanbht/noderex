@@ -31,7 +31,7 @@ This will create a new project with all the necessary files and dependencies.
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/arslanbht/noderex.git
 cd NodeRex
 ```
 
