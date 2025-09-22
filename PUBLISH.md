@@ -49,11 +49,9 @@ Before publishing, update the following in `package.json`:
 2. Update the repository URLs in `package.json`
 3. Push your code:
    ```bash
-   git init
    git add .
    git commit -m "Initial commit: NodeRex framework v1.0.0"
-   git remote add origin https://github.com/your-username/noderex.git
-   git push -u origin main
+   git push origin main
    ```
 
 ## Publishing to npm

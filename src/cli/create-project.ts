@@ -321,7 +321,7 @@ A NodeRex application.
 
 ## Documentation
 
-Visit [NodeRex Documentation](https://github.com/your-username/noderex) for more information.`;
+Visit [NodeRex Documentation](https://github.com/arslanbht/noderex) for more information.`;
 
     fs.writeFileSync(path.join(this.projectPath, 'README.md'), readmeContent);
 
