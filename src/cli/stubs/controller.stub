@@ -1,0 +1,46 @@
+import { Controller } from '../Controller';
+
+/**
+ * {{className}}
+ */
+export class {{className}} extends Controller {
+    /**
+     * Display a listing of the resource.
+     */
+    public async index(): Promise<void> {
+        // Implementation here
+        this.success({ message: 'Index method' });
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public async store(): Promise<void> {
+        // Implementation here
+        this.created({ message: 'Store method' });
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public async show(): Promise<void> {
+        // Implementation here
+        this.success({ message: 'Show method' });
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public async update(): Promise<void> {
+        // Implementation here
+        this.success({ message: 'Update method' });
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public async destroy(): Promise<void> {
+        // Implementation here
+        this.success({ message: 'Destroy method' });
+    }
+}

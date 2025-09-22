@@ -1,0 +1,13 @@
+import { Entity, Column, Index } from 'typeorm';
+import { Model } from './Model';
+
+/**
+ * {{className}} Model
+ */
+@Entity('{{tableName}}')
+export class {{className}} extends Model {
+    // Add your columns here
+    // Example:
+    // @Column({ type: 'varchar', length: 255 })
+    // name!: string;
+}
