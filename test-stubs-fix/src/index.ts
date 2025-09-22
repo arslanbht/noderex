@@ -10,4 +10,5 @@ const router = app.getRouter();
 setupRoutes(router);
 router.registerRoutes(); // Register the routes with Express
 
+// Start on port 3001 to avoid conflicts
 app.start().catch(console.error);
