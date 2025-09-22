@@ -235,10 +235,19 @@ export class Router {
    */
   private async importController(controllerName: string): Promise<any> {
     try {
-      // Try to import from the app/Controllers directory
-      const controllerPath = `../app/Controllers/${controllerName}`;
+      // Handle namespace controllers (e.g., Auth/UserController)
+      const parts = controllerName.split('/');
+      const fileName = parts[parts.length - 1];
+      const namespace = parts.slice(0, -1);
+      
+      // Build the path relative to the current working directory
+      const controllerPath = namespace.length > 0 
+        ? `./src/app/Controllers/${namespace.join('/')}/${fileName}`
+        : `./src/app/Controllers/${fileName}`;
+      
+      console.log(`Importing controller from: ${controllerPath}`);
       const module = await import(controllerPath);
-      return module[controllerName] || module.default;
+      return module[fileName] || module.default;
     } catch (error) {
       console.error(`Failed to import controller ${controllerName}:`, error);
       return null;
