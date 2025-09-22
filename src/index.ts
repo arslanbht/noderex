@@ -7,8 +7,8 @@ import { createConnection } from 'typeorm';
 import { app as appConfig } from './config/app';
 import { database } from './config/database';
 import { Router } from './routes/Router';
-import { errorHandler } from '@/app/Middleware/ErrorHandler';
-import { notFoundHandler } from '@/app/Middleware/NotFoundHandler';
+import { errorHandler } from './app/Middleware/ErrorHandler';
+import { notFoundHandler } from './app/Middleware/NotFoundHandler';
 
 /**
  * NodeRex Application Class

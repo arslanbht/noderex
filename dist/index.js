@@ -13,8 +13,8 @@ const typeorm_1 = require("typeorm");
 const app_1 = require("./config/app");
 const database_1 = require("./config/database");
 const Router_1 = require("./routes/Router");
-const ErrorHandler_1 = require("@/app/Middleware/ErrorHandler");
-const NotFoundHandler_1 = require("@/app/Middleware/NotFoundHandler");
+const ErrorHandler_1 = require("./app/Middleware/ErrorHandler");
+const NotFoundHandler_1 = require("./app/Middleware/NotFoundHandler");
 /**
  * NodeRex Application Class
  */

@@ -1,0 +1,31 @@
+import { Migration } from 'noderex';
+
+/**
+ * CreateUsersTable
+ */
+export class CreateUsersTable extends Migration {
+    /**
+     * Run the migration
+     */
+    public async up(): Promise<void> {
+        // Add your migration logic here
+        // Example:
+        // await this.query(\`
+        //     CREATE TABLE {{tableName}} (
+        //         id INT AUTO_INCREMENT PRIMARY KEY,
+        //         name VARCHAR(255) NOT NULL,
+        //         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        //         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        //     )
+        // \`);
+    }
+
+    /**
+     * Reverse the migration
+     */
+    public async down(): Promise<void> {
+        // Add your rollback logic here
+        // Example:
+        // await this.query(\`DROP TABLE IF EXISTS {{tableName}}\`);
+    }
+}

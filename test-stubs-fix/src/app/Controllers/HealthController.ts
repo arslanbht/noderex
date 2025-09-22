@@ -1,15 +1,18 @@
 import { Controller } from 'noderex';
 
 /**
- * TestController
+ * HealthController
  */
-export class TestController extends Controller {
+export class HealthController extends Controller {
     /**
-     * Display a listing of the resource.
+     * Health check endpoint
      */
     public async index(): Promise<void> {
-        // Implementation here
-        this.success({ message: 'Index method' });
+        this.success({
+            success: true,
+            message: 'API is running',
+            timestamp: new Date().toISOString()
+        });
     }
 
     /**

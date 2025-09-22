@@ -1,18 +1,17 @@
 import { Router } from 'noderex';
 
 export function setupRoutes(router: Router): void {
+  // Simple test route
+  router.get('/test', 'TestController@index');
+  
   // API routes
-  router.group('/api', (router) => {
-    router.get('/health', (req, res) => {
-      res.json({
-        success: true,
-        message: 'API is running',
-        timestamp: new Date().toISOString()
-      });
-    });
+  router.group('/api', (apiRouter) => {
+    // Health check route
+    apiRouter.get('/health', 'HealthController@index');
     
     // Add your routes here
-    // router.get('/users', 'UserController@index');
-    // router.post('/users', 'UserController@store');
+    // apiRouter.get('/users', 'UserController@index');
+    // apiRouter.post('/users', 'UserController@store');
+    // apiRouter.get('/auth/users', 'Auth/UserController@index');
   });
 }

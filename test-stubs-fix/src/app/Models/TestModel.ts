@@ -1,5 +1,5 @@
 import { Entity, Column, Index } from 'typeorm';
-import { Model } from './Model';
+import { Model } from 'noderex';
 
 /**
  * TestModel Model

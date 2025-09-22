@@ -1,9 +1,9 @@
 import { Request, Validation } from 'noderex';
 
 /**
- * CreateTestRequest
+ * CreateUserRequest
  */
-export class CreateTestRequest extends Request {
+export class CreateUserRequest extends Request {
     // Add your properties here
     // Example:
     // public name!: string;
