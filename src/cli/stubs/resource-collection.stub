@@ -1,7 +1,7 @@
 import { Resource } from 'noderex';
 
 /**
- * {{className}}
+ * {{className}} Collection
  */
 export class {{className}} extends Resource {
     /**
@@ -15,5 +15,12 @@ export class {{className}} extends Resource {
             // name: this.resource.name,
             // created_at: this.resource.created_at
         };
+    }
+
+    /**
+     * Transform a collection of resources
+     */
+    public static collection(resources: any[]): Record<string, any>[] {
+        return resources.map(resource => new {{className}}(resource).transform());
     }
 }

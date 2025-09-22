@@ -1,0 +1,30 @@
+import { Migration } from 'noderex';
+
+/**
+ * {{className}}
+ */
+export class {{className}} extends Migration {
+    /**
+     * Run the migration
+     */
+    public async up(): Promise<void> {
+        // Add your table modification logic here
+        // Example:
+        // await this.query(\`
+        //     ALTER TABLE {{tableName}} 
+        //     ADD COLUMN new_column VARCHAR(255)
+        // \`);
+    }
+
+    /**
+     * Reverse the migration
+     */
+    public async down(): Promise<void> {
+        // Add your rollback logic here
+        // Example:
+        // await this.query(\`
+        //     ALTER TABLE {{tableName}} 
+        //     DROP COLUMN new_column
+        // \`);
+    }
+}

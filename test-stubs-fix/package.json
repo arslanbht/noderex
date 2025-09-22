@@ -1,7 +1,7 @@
 {
-  "name": "test-commands",
+  "name": "test-stubs-fix",
   "version": "1.0.0",
-  "description": "A NodeRex application - test-commands",
+  "description": "A NodeRex application - test-stubs-fix",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

@@ -1,9 +1,9 @@
-import { Controller } from 'noderex';
+import { Controller } from '../Controller';
 
 /**
- * {{className}}
+ * TestController
  */
-export class {{className}} extends Controller {
+export class TestController extends Controller {
     /**
      * Display a listing of the resource.
      */

@@ -1,9 +1,9 @@
-import { Resource } from 'noderex';
+import { Resource } from './Resource';
 
 /**
- * {{className}}
+ * TestResource
  */
-export class {{className}} extends Resource {
+export class TestResource extends Resource {
     /**
      * Transform the resource data
      */

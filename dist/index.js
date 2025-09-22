@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NodeRexApplication = void 0;
+exports.Router = exports.Seeder = exports.Migration = exports.Validation = exports.Request = exports.Resource = exports.Controller = exports.Model = exports.NodeRexApplication = void 0;
 require("reflect-metadata");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
@@ -162,5 +162,22 @@ process.on('SIGINT', () => {
 if (require.main === module) {
     application.start().catch(console.error);
 }
+// Export the main application class
 exports.default = NodeRexApplication;
+// Export base classes for use in generated projects
+var Model_1 = require("./app/Models/Model");
+Object.defineProperty(exports, "Model", { enumerable: true, get: function () { return Model_1.Model; } });
+var Controller_1 = require("./app/Controllers/Controller");
+Object.defineProperty(exports, "Controller", { enumerable: true, get: function () { return Controller_1.Controller; } });
+var Resource_1 = require("./app/Http/Resources/Resource");
+Object.defineProperty(exports, "Resource", { enumerable: true, get: function () { return Resource_1.Resource; } });
+var Request_1 = require("./app/Http/Requests/Request");
+Object.defineProperty(exports, "Request", { enumerable: true, get: function () { return Request_1.Request; } });
+Object.defineProperty(exports, "Validation", { enumerable: true, get: function () { return Request_1.Validation; } });
+var Migration_1 = require("./database/migrations/Migration");
+Object.defineProperty(exports, "Migration", { enumerable: true, get: function () { return Migration_1.Migration; } });
+var Seeder_1 = require("./database/seeders/Seeder");
+Object.defineProperty(exports, "Seeder", { enumerable: true, get: function () { return Seeder_1.Seeder; } });
+var Router_2 = require("./routes/Router");
+Object.defineProperty(exports, "Router", { enumerable: true, get: function () { return Router_2.Router; } });
 //# sourceMappingURL=index.js.map

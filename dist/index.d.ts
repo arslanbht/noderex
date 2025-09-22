@@ -39,4 +39,11 @@ declare class NodeRexApplication {
 }
 export default NodeRexApplication;
 export { NodeRexApplication };
+export { Model } from './app/Models/Model';
+export { Controller } from './app/Controllers/Controller';
+export { Resource } from './app/Http/Resources/Resource';
+export { Request, Validation } from './app/Http/Requests/Request';
+export { Migration } from './database/migrations/Migration';
+export { Seeder } from './database/seeders/Seeder';
+export { Router } from './routes/Router';
 //# sourceMappingURL=index.d.ts.map

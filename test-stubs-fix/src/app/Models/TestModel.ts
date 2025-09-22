@@ -1,11 +1,11 @@
 import { Entity, Column, Index } from 'typeorm';
-import { Model } from 'noderex';
+import { Model } from './Model';
 
 /**
- * {{className}} Model
+ * TestModel Model
  */
-@Entity('{{tableName}}')
-export class {{className}} extends Model {
+@Entity('testmodels')
+export class TestModel extends Model {
     // Add your columns here
     // Example:
     // @Column({ type: 'varchar', length: 255 })

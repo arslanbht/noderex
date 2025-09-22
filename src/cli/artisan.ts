@@ -151,8 +151,19 @@ class MakeControllerCommand extends BaseCommand {
   async handle(args: any[]): Promise<void> {
     const [name, options] = args;
     const controllerName = this.formatName(name);
-    const fileName = `${controllerName}.ts`;
-    const filePath = path.join(process.cwd(), 'src', 'app', 'Controllers', fileName);
+    
+    // Handle namespace controllers (e.g., Auth/UserController)
+    const parts = controllerName.split('/');
+    const fileName = parts[parts.length - 1] + '.ts';
+    const namespace = parts.slice(0, -1);
+    
+    // Create directory structure if namespace exists
+    const controllerDir = path.join(process.cwd(), 'src', 'app', 'Controllers', ...namespace);
+    if (!fs.existsSync(controllerDir)) {
+      fs.mkdirSync(controllerDir, { recursive: true });
+    }
+    
+    const filePath = path.join(controllerDir, fileName);
 
     if (fs.existsSync(filePath)) {
       this.error(`Controller ${controllerName} already exists!`);
@@ -168,7 +179,7 @@ class MakeControllerCommand extends BaseCommand {
 
     const content = this.replaceStub(stub, {
       name: controllerName,
-      className: controllerName
+      className: parts[parts.length - 1] // Use the actual class name without namespace
     });
 
     this.createFile(filePath, content);

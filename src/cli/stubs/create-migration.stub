@@ -1,0 +1,26 @@
+import { Migration } from 'noderex';
+
+/**
+ * {{className}}
+ */
+export class {{className}} extends Migration {
+    /**
+     * Run the migration
+     */
+    public async up(): Promise<void> {
+        await this.query(\`
+            CREATE TABLE {{tableName}} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        \`);
+    }
+
+    /**
+     * Reverse the migration
+     */
+    public async down(): Promise<void> {
+        await this.query(\`DROP TABLE IF EXISTS {{tableName}}\`);
+    }
+}

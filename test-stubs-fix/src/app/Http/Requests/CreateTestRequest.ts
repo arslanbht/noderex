@@ -1,9 +1,10 @@
-import { Request, Validation } from 'noderex';
+import { Request } from './Request';
+import { Validation } from './Request';
 
 /**
- * {{className}}
+ * CreateTestRequest
  */
-export class {{className}} extends Request {
+export class CreateTestRequest extends Request {
     // Add your properties here
     // Example:
     // public name!: string;

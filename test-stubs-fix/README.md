@@ -1,4 +1,4 @@
-# test-commands
+# test-stubs-fix
 
 A NodeRex application.
 
