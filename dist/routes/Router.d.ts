@@ -5,7 +5,7 @@ import { Application, Request, Response, NextFunction } from 'express';
 export interface RouteDefinition {
     method: string;
     path: string;
-    handler: string;
+    handler: string | ((req: Request, res: Response) => any);
     middleware?: string[];
     name?: string;
 }
@@ -29,27 +29,27 @@ export declare class Router {
     /**
      * Define a GET route
      */
-    get(path: string, handler: string, middleware?: string[]): RouteDefinition;
+    get(path: string, handler: string | ((req: Request, res: Response) => any), middleware?: string[]): RouteDefinition;
     /**
      * Define a POST route
      */
-    post(path: string, handler: string, middleware?: string[]): RouteDefinition;
+    post(path: string, handler: string | ((req: Request, res: Response) => any), middleware?: string[]): RouteDefinition;
     /**
      * Define a PUT route
      */
-    put(path: string, handler: string, middleware?: string[]): RouteDefinition;
+    put(path: string, handler: string | ((req: Request, res: Response) => any), middleware?: string[]): RouteDefinition;
     /**
      * Define a PATCH route
      */
-    patch(path: string, handler: string, middleware?: string[]): RouteDefinition;
+    patch(path: string, handler: string | ((req: Request, res: Response) => any), middleware?: string[]): RouteDefinition;
     /**
      * Define a DELETE route
      */
-    delete(path: string, handler: string, middleware?: string[]): RouteDefinition;
+    delete(path: string, handler: string | ((req: Request, res: Response) => any), middleware?: string[]): RouteDefinition;
     /**
      * Define a route that accepts any HTTP method
      */
-    any(path: string, handler: string, middleware?: string[]): RouteDefinition;
+    any(path: string, handler: string | ((req: Request, res: Response) => any), middleware?: string[]): RouteDefinition;
     /**
      * Define multiple routes with the same prefix
      */
@@ -75,7 +75,7 @@ export declare class Router {
      */
     private getMiddlewareStack;
     /**
-     * Create Express handler from controller@method string
+     * Create Express handler from controller@method string or function
      */
     private createHandler;
     /**

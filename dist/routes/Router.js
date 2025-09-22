@@ -196,9 +196,21 @@ class Router {
             .filter(Boolean);
     }
     /**
-     * Create Express handler from controller@method string
+     * Create Express handler from controller@method string or function
      */
     createHandler(handler) {
+        // If handler is a function, return it directly
+        if (typeof handler === 'function') {
+            return async (req, res, next) => {
+                try {
+                    await handler(req, res);
+                }
+                catch (error) {
+                    next(error);
+                }
+            };
+        }
+        // If handler is a string (controller@method), handle controller route
         return async (req, res, next) => {
             try {
                 const [controllerName, methodName] = handler.split('@');

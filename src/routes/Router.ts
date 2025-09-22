@@ -7,7 +7,7 @@ import { Controller } from '../app/Controllers/Controller';
 export interface RouteDefinition {
   method: string;
   path: string;
-  handler: string;
+  handler: string | ((req: Request, res: Response) => any);
   middleware?: string[];
   name?: string;
 }
@@ -42,42 +42,42 @@ export class Router {
   /**
    * Define a GET route
    */
-  public get(path: string, handler: string, middleware: string[] = []): RouteDefinition {
+  public get(path: string, handler: string | ((req: Request, res: Response) => any), middleware: string[] = []): RouteDefinition {
     return this.addRoute('get', path, handler, middleware);
   }
 
   /**
    * Define a POST route
    */
-  public post(path: string, handler: string, middleware: string[] = []): RouteDefinition {
+  public post(path: string, handler: string | ((req: Request, res: Response) => any), middleware: string[] = []): RouteDefinition {
     return this.addRoute('post', path, handler, middleware);
   }
 
   /**
    * Define a PUT route
    */
-  public put(path: string, handler: string, middleware: string[] = []): RouteDefinition {
+  public put(path: string, handler: string | ((req: Request, res: Response) => any), middleware: string[] = []): RouteDefinition {
     return this.addRoute('put', path, handler, middleware);
   }
 
   /**
    * Define a PATCH route
    */
-  public patch(path: string, handler: string, middleware: string[] = []): RouteDefinition {
+  public patch(path: string, handler: string | ((req: Request, res: Response) => any), middleware: string[] = []): RouteDefinition {
     return this.addRoute('patch', path, handler, middleware);
   }
 
   /**
    * Define a DELETE route
    */
-  public delete(path: string, handler: string, middleware: string[] = []): RouteDefinition {
+  public delete(path: string, handler: string | ((req: Request, res: Response) => any), middleware: string[] = []): RouteDefinition {
     return this.addRoute('delete', path, handler, middleware);
   }
 
   /**
    * Define a route that accepts any HTTP method
    */
-  public any(path: string, handler: string, middleware: string[] = []): RouteDefinition {
+  public any(path: string, handler: string | ((req: Request, res: Response) => any), middleware: string[] = []): RouteDefinition {
     return this.addRoute('all', path, handler, middleware);
   }
 
@@ -140,7 +140,7 @@ export class Router {
   /**
    * Add a route definition
    */
-  private addRoute(method: string, path: string, handler: string, middleware: string[] = []): RouteDefinition {
+  private addRoute(method: string, path: string, handler: string | ((req: Request, res: Response) => any), middleware: string[] = []): RouteDefinition {
     const route: RouteDefinition = {
       method,
       path,
@@ -196,9 +196,21 @@ export class Router {
   }
 
   /**
-   * Create Express handler from controller@method string
+   * Create Express handler from controller@method string or function
    */
-  private createHandler(handler: string): (req: Request, res: Response, next: NextFunction) => void {
+  private createHandler(handler: string | ((req: Request, res: Response) => any)): (req: Request, res: Response, next: NextFunction) => void {
+    // If handler is a function, return it directly
+    if (typeof handler === 'function') {
+      return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+          await handler(req, res);
+        } catch (error) {
+          next(error);
+        }
+      };
+    }
+
+    // If handler is a string (controller@method), handle controller route
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         const [controllerName, methodName] = handler.split('@');
