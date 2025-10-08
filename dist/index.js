@@ -162,7 +162,7 @@ exports.default = NodeRexApplication;
 // Export base classes for use in generated projects
 var Model_1 = require("./app/Models/Model");
 Object.defineProperty(exports, "Model", { enumerable: true, get: function () { return Model_1.Model; } });
-var Controller_1 = require("./app/Controllers/Controller");
+var Controller_1 = require("./app/Http/Controllers/Controller");
 Object.defineProperty(exports, "Controller", { enumerable: true, get: function () { return Controller_1.Controller; } });
 var Resource_1 = require("./app/Http/Resources/Resource");
 Object.defineProperty(exports, "Resource", { enumerable: true, get: function () { return Resource_1.Resource; } });

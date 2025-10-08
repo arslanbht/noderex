@@ -225,10 +225,10 @@ RATE_LIMIT_MAX=100`;
     const directories = [
       'src',
       'src/app',
-      'src/app/Controllers',
       'src/app/Models',
       'src/app/Middleware',
       'src/app/Http',
+      'src/app/Http/Controllers',  // Laravel-style: Controllers inside Http
       'src/app/Http/Requests',
       'src/app/Http/Resources',
       'src/config',
@@ -259,7 +259,9 @@ import { setupRoutes } from './routes/web';
 const app = new NodeRexApplication();
 
 // Setup routes
-setupRoutes(app.getRouter());
+const router = app.getRouter();
+setupRoutes(router);
+router.registerRoutes(); // Register all routes with Express
 
 app.start().catch(console.error);`;
 

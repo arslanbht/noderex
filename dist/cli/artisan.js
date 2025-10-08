@@ -167,8 +167,8 @@ class MakeControllerCommand extends BaseCommand {
         const parts = controllerName.split('/');
         const fileName = parts[parts.length - 1] + '.ts';
         const namespace = parts.slice(0, -1);
-        // Create directory structure if namespace exists
-        const controllerDir = path.join(process.cwd(), 'src', 'app', 'Controllers', ...namespace);
+        // Create directory structure if namespace exists - Laravel-style structure
+        const controllerDir = path.join(process.cwd(), 'src', 'app', 'Http', 'Controllers', ...namespace);
         if (!fs.existsSync(controllerDir)) {
             fs.mkdirSync(controllerDir, { recursive: true });
         }

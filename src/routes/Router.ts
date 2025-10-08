@@ -1,5 +1,5 @@
 import { Application, Request, Response, NextFunction } from 'express';
-import { Controller } from '../app/Controllers/Controller';
+import { Controller } from '../app/Http/Controllers/Controller';
 
 /**
  * Route definition interface
@@ -286,25 +286,28 @@ export class Router {
       
       // Try multiple possible paths for controller location
       const possiblePaths = [
-        // Current project's dist directory (compiled)
+        // Current project's dist directory (compiled) - Laravel-style structure
+        namespace.length > 0 
+          ? path.join(cwd, 'dist', 'app', 'Http', 'Controllers', ...namespace, fileName)
+          : path.join(cwd, 'dist', 'app', 'Http', 'Controllers', fileName),
+        // Source directory (for development with ts-node) - Laravel-style structure
+        namespace.length > 0 
+          ? path.join(cwd, 'src', 'app', 'Http', 'Controllers', ...namespace, fileName)
+          : path.join(cwd, 'src', 'app', 'Http', 'Controllers', fileName),
+        // Legacy support (old structure)
         namespace.length > 0 
           ? path.join(cwd, 'dist', 'app', 'Controllers', ...namespace, fileName)
           : path.join(cwd, 'dist', 'app', 'Controllers', fileName),
-        // Relative dist/app/Controllers
-        namespace.length > 0 
-          ? path.join(cwd, 'dist', 'app', 'Controllers', ...namespace, fileName)
-          : path.join(cwd, 'dist', 'app', 'Controllers', fileName),
-        // Source directory (for development with ts-node)
         namespace.length > 0 
           ? path.join(cwd, 'src', 'app', 'Controllers', ...namespace, fileName)
           : path.join(cwd, 'src', 'app', 'Controllers', fileName),
         // Relative paths (legacy support)
         namespace.length > 0 
-          ? `./dist/app/Controllers/${namespace.join('/')}/${fileName}`
-          : `./dist/app/Controllers/${fileName}`,
+          ? `./dist/app/Http/Controllers/${namespace.join('/')}/${fileName}`
+          : `./dist/app/Http/Controllers/${fileName}`,
         namespace.length > 0 
-          ? `./src/app/Controllers/${namespace.join('/')}/${fileName}`
-          : `./src/app/Controllers/${fileName}`
+          ? `./src/app/Http/Controllers/${namespace.join('/')}/${fileName}`
+          : `./src/app/Http/Controllers/${fileName}`
       ];
       
       let module = null;
