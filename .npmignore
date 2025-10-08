@@ -1,0 +1,48 @@
+# Source files (we publish dist/ instead)
+src/
+tsconfig.json
+
+# Development files
+*.log
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+tests/
+*.test.ts
+*.spec.ts
+
+# Demo and documentation (keep README.md, LICENSE)
+DEMO.md
+PUBLICATION-READY.md
+PUBLISH.md
+database.sqlite
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# CI/CD
+.github/
+.travis.yml
+.gitlab-ci.yml
+
+# Misc
+coverage/
+.nyc_output/
+node_modules/
+
+# Demo app (don't include in package)
+../noderex-demo-app/
+
+# Keep only what's needed for the package
+# Included: dist/, README.md, LICENSE, package.json
