@@ -20,11 +20,13 @@ const NotFoundHandler_1 = require("./app/Middleware/NotFoundHandler");
  */
 class NodeRexApplication {
     constructor() {
+        this.errorHandlingSetup = false;
         this.app = (0, express_1.default)();
         this.router = new Router_1.Router(this.app);
         this.setupMiddleware();
         this.setupRoutes();
-        this.setupErrorHandling();
+        // Note: Error handling is setup just before starting the server
+        // to allow applications to register routes first
     }
     /**
      * Setup application middleware
@@ -58,32 +60,18 @@ class NodeRexApplication {
      * Setup application routes
      */
     setupRoutes() {
-        // Health check route
+        // Health check route - only route in the framework
         this.app.get('/health', (req, res) => {
             res.json({
                 success: true,
-                message: 'NodeRex API is running',
+                message: 'NodeRex Framework is running',
                 timestamp: new Date().toISOString(),
-                version: '1.0.0'
+                version: '1.0.0',
+                framework: 'NodeRex'
             });
         });
-        // API routes
-        this.router.group('/api', (router) => {
-            // User routes
-            router.get('/users', 'UserController@index');
-            router.post('/users', 'UserController@store');
-            router.get('/users/:id', 'UserController@show');
-            router.put('/users/:id', 'UserController@update');
-            router.delete('/users/:id', 'UserController@destroy');
-            // Post routes
-            router.get('/posts', 'PostController@index');
-            router.post('/posts', 'PostController@store');
-            router.get('/posts/:id', 'PostController@show');
-            router.put('/posts/:id', 'PostController@update');
-            router.delete('/posts/:id', 'PostController@destroy');
-        });
-        // Register all routes
-        this.router.registerRoutes();
+        // Note: Application routes should be defined in the application project
+        // by importing NodeRexApplication and calling getRouter() to add routes
     }
     /**
      * Setup error handling
@@ -118,6 +106,11 @@ class NodeRexApplication {
      */
     async start() {
         try {
+            // Setup error handling (must be done AFTER all routes are registered)
+            if (!this.errorHandlingSetup) {
+                this.setupErrorHandling();
+                this.errorHandlingSetup = true;
+            }
             // Initialize database
             await this.initializeDatabase();
             // Start server
@@ -147,19 +140,21 @@ class NodeRexApplication {
     }
 }
 exports.NodeRexApplication = NodeRexApplication;
-// Create and start the application
-const application = new NodeRexApplication();
-// Handle graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    process.exit(0);
-});
-process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully');
-    process.exit(0);
-});
-// Start the application
+// Only start the application if this file is run directly
+// This allows the framework to be imported without auto-starting
 if (require.main === module) {
+    console.log('⚠️  Running framework directly. Usually you would create an application that uses this framework.');
+    console.log('ℹ️  Starting framework in standalone mode for testing...\n');
+    const application = new NodeRexApplication();
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => {
+        console.log('SIGTERM received, shutting down gracefully');
+        process.exit(0);
+    });
+    process.on('SIGINT', () => {
+        console.log('SIGINT received, shutting down gracefully');
+        process.exit(0);
+    });
     application.start().catch(console.error);
 }
 // Export the main application class

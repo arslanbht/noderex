@@ -7,6 +7,7 @@ import { Router } from './routes/Router';
 declare class NodeRexApplication {
     private app;
     private router;
+    private errorHandlingSetup;
     constructor();
     /**
      * Setup application middleware

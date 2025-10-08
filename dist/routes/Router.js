@@ -159,33 +159,57 @@ class Router {
      * Register all routes with Express
      */
     registerRoutes() {
-        this.routes.forEach(route => {
-            const method = route.method.toLowerCase();
-            const handler = this.createHandler(route.handler);
-            const middleware = this.getMiddlewareStack(route.middleware || []);
-            switch (method) {
-                case 'get':
-                    this.app.get(route.path, ...middleware, handler);
-                    break;
-                case 'post':
-                    this.app.post(route.path, ...middleware, handler);
-                    break;
-                case 'put':
-                    this.app.put(route.path, ...middleware, handler);
-                    break;
-                case 'patch':
-                    this.app.patch(route.path, ...middleware, handler);
-                    break;
-                case 'delete':
-                    this.app.delete(route.path, ...middleware, handler);
-                    break;
-                case 'all':
-                    this.app.all(route.path, ...middleware, handler);
-                    break;
-                default:
-                    console.warn(`Unknown HTTP method: ${method}`);
+        console.log(`📋 Registering ${this.routes.length} routes...`);
+        let successCount = 0;
+        let errorCount = 0;
+        this.routes.forEach((route, index) => {
+            try {
+                console.log(`  ${route.method.toUpperCase()} ${route.path} -> ${typeof route.handler === 'function' ? '[Function]' : route.handler}`);
+                const method = route.method.toLowerCase();
+                const handler = this.createHandler(route.handler);
+                const middleware = this.getMiddlewareStack(route.middleware || []);
+                // Validate middleware
+                const invalidMiddleware = middleware.filter(mw => !mw);
+                if (invalidMiddleware.length > 0) {
+                    console.warn(`⚠️  Route ${route.method} ${route.path} has ${invalidMiddleware.length} invalid middleware`);
+                }
+                switch (method) {
+                    case 'get':
+                        this.app.get(route.path, ...middleware, handler);
+                        break;
+                    case 'post':
+                        this.app.post(route.path, ...middleware, handler);
+                        break;
+                    case 'put':
+                        this.app.put(route.path, ...middleware, handler);
+                        break;
+                    case 'patch':
+                        this.app.patch(route.path, ...middleware, handler);
+                        break;
+                    case 'delete':
+                        this.app.delete(route.path, ...middleware, handler);
+                        break;
+                    case 'all':
+                        this.app.all(route.path, ...middleware, handler);
+                        break;
+                    default:
+                        console.warn(`⚠️  Unknown HTTP method: ${method} for route ${route.path}`);
+                        errorCount++;
+                        return;
+                }
+                successCount++;
+            }
+            catch (error) {
+                console.error(`❌ Failed to register route ${route.method} ${route.path}:`, error);
+                errorCount++;
             }
         });
+        if (errorCount > 0) {
+            console.log(`⚠️  Routes registered with ${errorCount} errors and ${successCount} successes`);
+        }
+        else {
+            console.log(`✅ All ${successCount} routes registered successfully`);
+        }
     }
     /**
      * Get middleware stack for a route
@@ -242,21 +266,63 @@ class Router {
      * Dynamically import controller
      */
     async importController(controllerName) {
+        // Handle namespace controllers (e.g., Auth/UserController)
+        const parts = controllerName.split('/');
+        const fileName = parts[parts.length - 1];
+        const namespace = parts.slice(0, -1);
+        const path = require('path');
         try {
-            // Handle namespace controllers (e.g., Auth/UserController)
-            const parts = controllerName.split('/');
-            const fileName = parts[parts.length - 1];
-            const namespace = parts.slice(0, -1);
-            // Build the path relative to the current working directory
-            const controllerPath = namespace.length > 0
-                ? `./src/app/Controllers/${namespace.join('/')}/${fileName}`
-                : `./src/app/Controllers/${fileName}`;
-            console.log(`Importing controller from: ${controllerPath}`);
-            const module = await Promise.resolve(`${controllerPath}`).then(s => __importStar(require(s)));
-            return module[fileName] || module.default;
+            // Get the current working directory (application root)
+            const cwd = process.cwd();
+            // Try multiple possible paths for controller location
+            const possiblePaths = [
+                // Current project's dist directory (compiled)
+                namespace.length > 0
+                    ? path.join(cwd, 'dist', 'app', 'Controllers', ...namespace, fileName)
+                    : path.join(cwd, 'dist', 'app', 'Controllers', fileName),
+                // Relative dist/app/Controllers
+                namespace.length > 0
+                    ? path.join(cwd, 'dist', 'app', 'Controllers', ...namespace, fileName)
+                    : path.join(cwd, 'dist', 'app', 'Controllers', fileName),
+                // Source directory (for development with ts-node)
+                namespace.length > 0
+                    ? path.join(cwd, 'src', 'app', 'Controllers', ...namespace, fileName)
+                    : path.join(cwd, 'src', 'app', 'Controllers', fileName),
+                // Relative paths (legacy support)
+                namespace.length > 0
+                    ? `./dist/app/Controllers/${namespace.join('/')}/${fileName}`
+                    : `./dist/app/Controllers/${fileName}`,
+                namespace.length > 0
+                    ? `./src/app/Controllers/${namespace.join('/')}/${fileName}`
+                    : `./src/app/Controllers/${fileName}`
+            ];
+            let module = null;
+            let successfulPath = '';
+            for (const controllerPath of possiblePaths) {
+                try {
+                    console.log(`🔍 Trying to import controller from: ${controllerPath}`);
+                    module = await Promise.resolve(`${controllerPath}`).then(s => __importStar(require(s)));
+                    successfulPath = controllerPath;
+                    break;
+                }
+                catch (pathError) {
+                    // Continue to next path
+                    continue;
+                }
+            }
+            if (!module) {
+                throw new Error(`Controller not found in any of the expected locations`);
+            }
+            const ControllerClass = module[fileName] || module.default;
+            if (!ControllerClass) {
+                console.error(`❌ Controller class not found in module: ${controllerName}`);
+                return null;
+            }
+            console.log(`✅ Successfully imported controller: ${controllerName} from ${successfulPath}`);
+            return ControllerClass;
         }
         catch (error) {
-            console.error(`Failed to import controller ${controllerName}:`, error);
+            console.error(`❌ Failed to import controller ${controllerName}:`, error);
             return null;
         }
     }
