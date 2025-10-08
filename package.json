@@ -1,6 +1,6 @@
 {
   "name": "noderex",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Laravel-styled Node.js framework with MVC, migrations, validation, and API resources",
   "main": "dist/index.js",
   "bin": {
