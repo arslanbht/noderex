@@ -53,9 +53,17 @@ class NodeRexApplication {
     
     // Request logging middleware
     this.app.use((req, res, next) => {
-      if (appConfig.debug) {
-        console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
-      }
+      const startTime = Date.now();
+      
+      // Log response when finished
+      res.on('finish', () => {
+        const responseTime = Date.now() - startTime;
+        if (appConfig.debug) {
+          const { Logger } = require('./app/Support/Logger');
+          Logger.request(req, res, responseTime);
+        }
+      });
+      
       next();
     });
   }
@@ -104,10 +112,12 @@ class NodeRexApplication {
 
       await createConnection(connectionConfig);
 
-      console.log('✅ Database connected successfully');
+      const { Logger } = require('./app/Support/Logger');
+      Logger.info('Database connected successfully', { connection: connectionName });
     } catch (error) {
-      console.error('❌ Database connection failed:', error);
-      console.log('ℹ️  Continuing without database connection...');
+      const { Logger } = require('./app/Support/Logger');
+      Logger.error('Database connection failed', error, { connection: connectionName });
+      Logger.warn('Continuing without database connection...');
       // Don't exit in development mode, allow app to run without DB
     }
   }
@@ -128,10 +138,13 @@ class NodeRexApplication {
       
       // Start server
       this.app.listen(appConfig.port, () => {
-        console.log(`🚀 ${appConfig.name} server is running on port ${appConfig.port}`);
-        console.log(`📍 Environment: ${appConfig.env}`);
-        console.log(`🔗 URL: ${appConfig.url}`);
-        console.log(`🐛 Debug: ${appConfig.debug ? 'Enabled' : 'Disabled'}`);
+        const { Logger } = require('./app/Support/Logger');
+        Logger.info(`${appConfig.name} server is running`, {
+          port: appConfig.port,
+          environment: appConfig.env,
+          url: appConfig.url,
+          debug: appConfig.debug,
+        });
       });
     } catch (error) {
       console.error('❌ Failed to start application:', error);
@@ -184,7 +197,16 @@ export { NodeRexApplication };
 export { Model } from './app/Models/Model';
 export { Controller } from './app/Http/Controllers/Controller';
 export { Resource } from './app/Http/Resources/Resource';
-export { Request, Validation } from './app/Http/Requests/Request';
+export { Request, Validation, ValidationException } from './app/Http/Requests/Request';
 export { Migration } from './database/migrations/Migration';
 export { Seeder } from './database/seeders/Seeder';
 export { Router } from './routes/Router';
+export { Logger, LogLevel } from './app/Support/Logger';
+export {
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+  TooManyRequestsError,
+  BadRequestError,
+} from './app/Middleware/ErrorHandler';

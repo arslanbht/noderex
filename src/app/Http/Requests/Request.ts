@@ -119,13 +119,102 @@ export abstract class Request {
     const ruleValue = rule[ruleType];
     const customMessage = customMessages[`${field}.${ruleType}`] || customMessages[field];
 
+    // Nullable validation - allow null values
+    const isNullable = rule.nullable === true;
+    if (isNullable && value === null) {
+      return null; // Null is allowed, skip other validations
+    }
+
+    // Sometimes validation - only validate if field is present
+    if (rule.sometimes === true && (value === undefined || value === null || value === '')) {
+      return null; // Field not present, skip validation
+    }
+
+    // SometimesOr validation - validate if field is present OR if other conditions are met
+    if (rule.sometimesOr === true) {
+      const shouldValidate = value !== undefined && value !== null && value !== '';
+      if (!shouldValidate) {
+        // Check if any of the alternative rules require validation
+        const hasRequiredRule = rule.rules?.some((r: any) => r.required);
+        if (!hasRequiredRule) {
+          return null; // Skip validation if field not present and no required rule
+        }
+      }
+    }
+
     // Required validation
     if (rule.required && (value === undefined || value === null || value === '')) {
       return customMessage || rule.message || `The ${fieldName} field is required.`;
     }
 
+    // RequiredIf validation
+    if (rule.requiredIf) {
+      const { field: otherField, value: otherValue } = rule.requiredIf;
+      if (allData[otherField] === otherValue && (value === undefined || value === null || value === '')) {
+        return customMessage || rule.message || `The ${fieldName} field is required when ${attributes[otherField] || otherField} is ${otherValue}.`;
+      }
+    }
+
+    // RequiredUnless validation
+    if (rule.requiredUnless) {
+      const { field: otherField, value: otherValue } = rule.requiredUnless;
+      if (allData[otherField] !== otherValue && (value === undefined || value === null || value === '')) {
+        return customMessage || rule.message || `The ${fieldName} field is required unless ${attributes[otherField] || otherField} is ${otherValue}.`;
+      }
+    }
+
+    // RequiredWith validation
+    if (rule.requiredWith) {
+      const hasAnyField = rule.requiredWith.some((f: string) => allData[f] !== undefined && allData[f] !== null && allData[f] !== '');
+      if (hasAnyField && (value === undefined || value === null || value === '')) {
+        return customMessage || rule.message || `The ${fieldName} field is required when ${rule.requiredWith.join(' or ')} is present.`;
+      }
+    }
+
+    // RequiredWithAll validation
+    if (rule.requiredWithAll) {
+      const hasAllFields = rule.requiredWithAll.every((f: string) => allData[f] !== undefined && allData[f] !== null && allData[f] !== '');
+      if (hasAllFields && (value === undefined || value === null || value === '')) {
+        return customMessage || rule.message || `The ${fieldName} field is required when ${rule.requiredWithAll.join(' and ')} are present.`;
+      }
+    }
+
+    // RequiredWithout validation
+    if (rule.requiredWithout) {
+      const hasAnyField = rule.requiredWithout.some((f: string) => allData[f] !== undefined && allData[f] !== null && allData[f] !== '');
+      if (!hasAnyField && (value === undefined || value === null || value === '')) {
+        return customMessage || rule.message || `The ${fieldName} field is required when ${rule.requiredWithout.join(' or ')} is not present.`;
+      }
+    }
+
+    // RequiredWithoutAll validation
+    if (rule.requiredWithoutAll) {
+      const hasAnyField = rule.requiredWithoutAll.some((f: string) => allData[f] !== undefined && allData[f] !== null && allData[f] !== '');
+      if (!hasAnyField && (value === undefined || value === null || value === '')) {
+        return customMessage || rule.message || `The ${fieldName} field is required when none of ${rule.requiredWithoutAll.join(' or ')} are present.`;
+      }
+    }
+
+    // Present validation - field must be present (can be null/empty)
+    if (rule.present && value === undefined) {
+      return customMessage || rule.message || `The ${fieldName} field must be present.`;
+    }
+
+    // Filled validation - field must be present and not empty
+    if (rule.filled && (value === undefined || value === null || value === '')) {
+      return customMessage || rule.message || `The ${fieldName} field must have a value.`;
+    }
+
+    // Accepted validation (must be 'yes', 'on', '1', 'true', 1, true)
+    if (rule.accepted) {
+      const acceptedValues = ['yes', 'on', '1', 'true', 1, true];
+      if (!acceptedValues.includes(value)) {
+        return customMessage || rule.message || `The ${fieldName} must be accepted.`;
+      }
+    }
+
     // Skip other validations if field is empty and not required
-    if ((value === undefined || value === null || value === '') && !rule.required) {
+    if ((value === undefined || value === null || value === '') && !rule.required && !isNullable) {
       return null;
     }
 
@@ -174,6 +263,14 @@ export abstract class Request {
       }
     }
 
+    // Integer validation
+    if (rule.integer) {
+      const numValue = Number(value);
+      if (isNaN(numValue) || !Number.isInteger(numValue)) {
+        return customMessage || rule.message || `The ${fieldName} must be an integer.`;
+      }
+    }
+
     // Alpha validation (letters only)
     if (rule.alpha) {
       if (!/^[a-zA-Z]+$/.test(String(value))) {
@@ -185,6 +282,13 @@ export abstract class Request {
     if (rule.alphaNumeric) {
       if (!/^[a-zA-Z0-9]+$/.test(String(value))) {
         return customMessage || rule.message || `The ${fieldName} may only contain letters and numbers.`;
+      }
+    }
+
+    // Alpha dash validation (letters, numbers, dashes, underscores)
+    if (rule.alphaDash) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(String(value))) {
+        return customMessage || rule.message || `The ${fieldName} may only contain letters, numbers, dashes and underscores.`;
       }
     }
 
@@ -210,6 +314,51 @@ export abstract class Request {
       const date = new Date(String(value));
       if (isNaN(date.getTime())) {
         return customMessage || rule.message || `The ${fieldName} must be a valid date.`;
+      }
+    }
+
+    // Date format validation
+    if (rule.dateFormat) {
+      // Simple date format validation - can be enhanced
+      const date = new Date(String(value));
+      if (isNaN(date.getTime())) {
+        return customMessage || rule.message || `The ${fieldName} must be a valid date in format ${rule.dateFormat}.`;
+      }
+    }
+
+    // Before date validation
+    if (rule.before) {
+      const valueDate = new Date(String(value));
+      const beforeDate = rule.before instanceof Date ? rule.before : new Date(String(rule.before));
+      if (isNaN(valueDate.getTime()) || valueDate >= beforeDate) {
+        return customMessage || rule.message || `The ${fieldName} must be a date before ${beforeDate.toISOString()}.`;
+      }
+    }
+
+    // After date validation
+    if (rule.after) {
+      const valueDate = new Date(String(value));
+      const afterDate = rule.after instanceof Date ? rule.after : new Date(String(rule.after));
+      if (isNaN(valueDate.getTime()) || valueDate <= afterDate) {
+        return customMessage || rule.message || `The ${fieldName} must be a date after ${afterDate.toISOString()}.`;
+      }
+    }
+
+    // Before or equal date validation
+    if (rule.beforeOrEqual) {
+      const valueDate = new Date(String(value));
+      const beforeDate = rule.beforeOrEqual instanceof Date ? rule.beforeOrEqual : new Date(String(rule.beforeOrEqual));
+      if (isNaN(valueDate.getTime()) || valueDate > beforeDate) {
+        return customMessage || rule.message || `The ${fieldName} must be a date before or equal to ${beforeDate.toISOString()}.`;
+      }
+    }
+
+    // After or equal date validation
+    if (rule.afterOrEqual) {
+      const valueDate = new Date(String(value));
+      const afterDate = rule.afterOrEqual instanceof Date ? rule.afterOrEqual : new Date(String(rule.afterOrEqual));
+      if (isNaN(valueDate.getTime()) || valueDate < afterDate) {
+        return customMessage || rule.message || `The ${fieldName} must be a date after or equal to ${afterDate.toISOString()}.`;
       }
     }
 
@@ -274,6 +423,97 @@ export abstract class Request {
     if (rule.regex) {
       if (!rule.regex.test(String(value))) {
         return customMessage || rule.message || `The ${fieldName} format is invalid.`;
+      }
+    }
+
+    // Size validation (exact length for strings, exact count for arrays)
+    if (rule.size !== undefined) {
+      if (Array.isArray(value)) {
+        if (value.length !== rule.size) {
+          return customMessage || rule.message || `The ${fieldName} must contain exactly ${rule.size} items.`;
+        }
+      } else {
+        if (String(value).length !== rule.size) {
+          return customMessage || rule.message || `The ${fieldName} must be exactly ${rule.size} characters.`;
+        }
+      }
+    }
+
+    // Between validation
+    if (rule.between) {
+      const { min, max } = rule.between;
+      if (Array.isArray(value)) {
+        if (value.length < min || value.length > max) {
+          return customMessage || rule.message || `The ${fieldName} must have between ${min} and ${max} items.`;
+        }
+      } else {
+        const numValue = Number(value);
+        if (isNaN(numValue) || numValue < min || numValue > max) {
+          return customMessage || rule.message || `The ${fieldName} must be between ${min} and ${max}.`;
+        }
+      }
+    }
+
+    // Starts with validation
+    if (rule.startsWith) {
+      if (!String(value).startsWith(rule.startsWith)) {
+        return customMessage || rule.message || `The ${fieldName} must start with ${rule.startsWith}.`;
+      }
+    }
+
+    // Ends with validation
+    if (rule.endsWith) {
+      if (!String(value).endsWith(rule.endsWith)) {
+        return customMessage || rule.message || `The ${fieldName} must end with ${rule.endsWith}.`;
+      }
+    }
+
+    // Contains validation
+    if (rule.contains) {
+      if (!String(value).includes(rule.contains)) {
+        return customMessage || rule.message || `The ${fieldName} must contain ${rule.contains}.`;
+      }
+    }
+
+    // IP validation
+    if (rule.ip) {
+      const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+      if (!ipRegex.test(String(value))) {
+        return customMessage || rule.message || `The ${fieldName} must be a valid IP address.`;
+      }
+    }
+
+    // IPv4 validation
+    if (rule.ipv4) {
+      const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      if (!ipv4Regex.test(String(value))) {
+        return customMessage || rule.message || `The ${fieldName} must be a valid IPv4 address.`;
+      }
+    }
+
+    // IPv6 validation
+    if (rule.ipv6) {
+      const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+      if (!ipv6Regex.test(String(value))) {
+        return customMessage || rule.message || `The ${fieldName} must be a valid IPv6 address.`;
+      }
+    }
+
+    // JSON validation
+    if (rule.json) {
+      try {
+        JSON.parse(String(value));
+      } catch {
+        return customMessage || rule.message || `The ${fieldName} must be valid JSON.`;
+      }
+    }
+
+    // Timezone validation
+    if (rule.timezone) {
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: String(value) });
+      } catch {
+        return customMessage || rule.message || `The ${fieldName} must be a valid timezone.`;
       }
     }
 
@@ -412,17 +652,25 @@ export function Exists(table: string, column: string, message?: string) {
  */
 export const Validation = {
   required: (message?: string) => ({ required: true, message }),
+  nullable: () => ({ nullable: true }),
+  sometimes: () => ({ sometimes: true }),
+  sometimesOr: (rules: any[]) => ({ sometimesOr: true, rules }),
   email: (message?: string) => ({ email: true, message }),
   min: (length: number, message?: string) => ({ minLength: length, message }),
   max: (length: number, message?: string) => ({ maxLength: length, message }),
   minValue: (value: number, message?: string) => ({ min: value, message }),
   maxValue: (value: number, message?: string) => ({ max: value, message }),
   numeric: (message?: string) => ({ numeric: true, message }),
+  integer: (message?: string) => ({ integer: true, message }),
   alpha: (message?: string) => ({ alpha: true, message }),
   alphaNumeric: (message?: string) => ({ alphaNumeric: true, message }),
+  alphaDash: (message?: string) => ({ alphaDash: true, message }),
   url: (message?: string) => ({ url: true, message }),
   uuid: (message?: string) => ({ uuid: true, message }),
   date: (message?: string) => ({ date: true, message }),
+  dateFormat: (format: string, message?: string) => ({ dateFormat: format, message }),
+  before: (date: string | Date, message?: string) => ({ before: date, message }),
+  after: (date: string | Date, message?: string) => ({ after: date, message }),
   boolean: (message?: string) => ({ boolean: true, message }),
   array: (message?: string) => ({ array: true, message }),
   object: (message?: string) => ({ object: true, message }),
@@ -433,5 +681,33 @@ export const Validation = {
   exists: (table: string, column: string, message?: string) => ({ exists: `${table}.${column}`, message }),
   in: (values: any[], message?: string) => ({ in: values, message }),
   notIn: (values: any[], message?: string) => ({ notIn: values, message }),
-  regex: (pattern: RegExp, message?: string) => ({ regex: pattern, message })
+  regex: (pattern: RegExp, message?: string) => ({ regex: pattern, message }),
+  size: (size: number, message?: string) => ({ size: size, message }),
+  between: (min: number, max: number, message?: string) => ({ between: { min, max }, message }),
+  startsWith: (prefix: string, message?: string) => ({ startsWith: prefix, message }),
+  endsWith: (suffix: string, message?: string) => ({ endsWith: suffix, message }),
+  contains: (value: string, message?: string) => ({ contains: value, message }),
+  ip: (message?: string) => ({ ip: true, message }),
+  ipv4: (message?: string) => ({ ipv4: true, message }),
+  ipv6: (message?: string) => ({ ipv6: true, message }),
+  json: (message?: string) => ({ json: true, message }),
+  file: (message?: string) => ({ file: true, message }),
+  image: (message?: string) => ({ image: true, message }),
+  mimes: (mimes: string[], message?: string) => ({ mimes: mimes, message }),
+  mimeTypes: (types: string[], message?: string) => ({ mimeTypes: types, message }),
+  dimensions: (constraints: Record<string, any>, message?: string) => ({ dimensions: constraints, message }),
+  accepted: (message?: string) => ({ accepted: true, message }),
+  activeUrl: (message?: string) => ({ activeUrl: true, message }),
+  afterOrEqual: (date: string | Date, message?: string) => ({ afterOrEqual: date, message }),
+  beforeOrEqual: (date: string | Date, message?: string) => ({ beforeOrEqual: date, message }),
+  bail: () => ({ bail: true }),
+  filled: (message?: string) => ({ filled: true, message }),
+  present: (message?: string) => ({ present: true, message }),
+  requiredIf: (field: string, value: any, message?: string) => ({ requiredIf: { field, value }, message }),
+  requiredUnless: (field: string, value: any, message?: string) => ({ requiredUnless: { field, value }, message }),
+  requiredWith: (fields: string[], message?: string) => ({ requiredWith: fields, message }),
+  requiredWithAll: (fields: string[], message?: string) => ({ requiredWithAll: fields, message }),
+  requiredWithout: (fields: string[], message?: string) => ({ requiredWithout: fields, message }),
+  requiredWithoutAll: (fields: string[], message?: string) => ({ requiredWithoutAll: fields, message }),
+  timezone: (message?: string) => ({ timezone: true, message }),
 };
