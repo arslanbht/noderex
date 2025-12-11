@@ -30,14 +30,28 @@ export abstract class Model extends BaseEntity {
 
   /**
    * Convert the model instance to JSON
+   * Includes all properties including TypeORM columns
    */
   public toJSON(): Record<string, any> {
     const json: Record<string, any> = {};
-    Object.keys(this).forEach(key => {
-      if (this[key as keyof this] !== undefined) {
-        json[key] = this[key as keyof this];
+    // Get all own properties (including TypeORM columns)
+    const allKeys = Object.getOwnPropertyNames(this);
+    
+    allKeys.forEach(key => {
+      // Skip internal TypeORM properties
+      if (key.startsWith('__') || key === 'hasId' || key === 'save' || key === 'remove' || key === 'softRemove' || key === 'recover' || key === 'reload') {
+        return;
+      }
+      
+      const value = (this as any)[key];
+      if (value !== undefined) {
+        // Handle functions - skip them in JSON
+        if (typeof value !== 'function') {
+          json[key] = value;
+        }
       }
     });
+    
     return json;
   }
 

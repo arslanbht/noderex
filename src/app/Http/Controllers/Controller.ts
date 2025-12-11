@@ -50,9 +50,9 @@ export abstract class Controller {
    * Get input by key
    */
   protected input(key: string, defaultValue: any = null): any {
-    return this.request.body[key] || 
-           this.request.query[key] || 
-           this.request.params[key] || 
+    return this.request.body[key] ?? 
+           this.request.query[key] ?? 
+           this.request.params[key] ?? 
            defaultValue;
   }
 
