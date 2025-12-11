@@ -169,6 +169,57 @@ await user.roles().sync([1, 2, 3]);
 await user.roles().toggle([1, 2]);
 ```
 
+## Polymorphic Relationships
+
+NodeRex supports Laravel-style polymorphic relationships. See [Polymorphic Relationships Guide](./docs/POLYMORPHIC_RELATIONSHIPS.md) for complete documentation.
+
+### Quick Examples
+
+```typescript
+// MorphTo - Polymorphic belongs-to
+@Entity('comments')
+export class Comment extends Model {
+  public commentable() {
+    return this.morphTo<Post | Video>('commentable_type', 'commentable_id', {
+      Post: Post,
+      Video: Video,
+    });
+  }
+}
+
+// MorphOne - Polymorphic one-to-one
+@Entity('posts')
+export class Post extends Model {
+  public image() {
+    return this.morphOne(Image, 'imageable_type', 'imageable_id');
+  }
+}
+
+// MorphMany - Polymorphic one-to-many
+@Entity('posts')
+export class Post extends Model {
+  public comments() {
+    return this.morphMany(Comment, 'commentable_type', 'commentable_id');
+  }
+}
+
+// MorphToMany - Polymorphic many-to-many
+@Entity('posts')
+export class Post extends Model {
+  public tags() {
+    return this.morphToMany(Tag, 'taggables', 'taggable_type', 'taggable_id');
+  }
+}
+
+// MorphedByMany - Inverse of MorphToMany
+@Entity('tags')
+export class Tag extends Model {
+  public posts() {
+    return this.morphedByMany(Post, 'taggables', 'taggable_type', 'taggable_id');
+  }
+}
+```
+
 ## Query Scopes
 
 Query scopes allow you to encapsulate query logic and reuse it throughout your application.

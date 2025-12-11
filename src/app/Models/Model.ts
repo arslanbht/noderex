@@ -4,6 +4,11 @@ import { HasMany } from './Relations/HasMany';
 import { BelongsTo } from './Relations/BelongsTo';
 import { HasOne } from './Relations/HasOne';
 import { BelongsToMany } from './Relations/BelongsToMany';
+import { MorphTo } from './Relations/MorphTo';
+import { MorphOne } from './Relations/MorphOne';
+import { MorphMany } from './Relations/MorphMany';
+import { MorphToMany } from './Relations/MorphToMany';
+import { MorphedByMany } from './Relations/MorphedByMany';
 
 /**
  * Base Model class for NodeRex framework
@@ -142,6 +147,98 @@ export abstract class Model extends BaseEntity {
       this,
       related,
       pivotTable,
+      foreignPivotKey,
+      relatedPivotKey,
+      parentKey,
+      relatedKey
+    );
+  }
+
+  /**
+   * Define a morph-to relationship (polymorphic belongs-to)
+   * @example this.commentable = this.morphTo('commentable_type', 'commentable_id')
+   */
+  public morphTo<T extends Model>(
+    morphTypeColumn: string = 'morphable_type',
+    morphIdColumn: string = 'morphable_id',
+    morphMap?: Record<string, new () => T>
+  ): MorphTo<T> {
+    return new MorphTo(this, morphTypeColumn, morphIdColumn, morphMap);
+  }
+
+  /**
+   * Define a morph-one relationship (polymorphic one-to-one)
+   * @example this.image = this.morphOne(Image, 'imageable_type', 'imageable_id')
+   */
+  public morphOne<T extends Model>(
+    related: new () => T,
+    morphTypeColumn: string = 'morphable_type',
+    morphIdColumn: string = 'morphable_id',
+    localKey: string = 'id'
+  ): MorphOne<T> {
+    return new MorphOne(this, related, morphTypeColumn, morphIdColumn, localKey);
+  }
+
+  /**
+   * Define a morph-many relationship (polymorphic one-to-many)
+   * @example this.comments = this.morphMany(Comment, 'commentable_type', 'commentable_id')
+   */
+  public morphMany<T extends Model>(
+    related: new () => T,
+    morphTypeColumn: string = 'morphable_type',
+    morphIdColumn: string = 'morphable_id',
+    localKey: string = 'id'
+  ): MorphMany<T> {
+    return new MorphMany(this, related, morphTypeColumn, morphIdColumn, localKey);
+  }
+
+  /**
+   * Define a morph-to-many relationship (polymorphic many-to-many)
+   * @example this.tags = this.morphToMany(Tag, 'taggables', 'taggable_type', 'taggable_id')
+   */
+  public morphToMany<T extends Model>(
+    related: new () => T,
+    pivotTable: string,
+    morphTypeColumn: string = 'morphable_type',
+    morphIdColumn: string = 'morphable_id',
+    foreignPivotKey?: string,
+    relatedPivotKey?: string,
+    parentKey: string = 'id',
+    relatedKey: string = 'id'
+  ): MorphToMany<T> {
+    return new MorphToMany(
+      this,
+      related,
+      pivotTable,
+      morphTypeColumn,
+      morphIdColumn,
+      foreignPivotKey,
+      relatedPivotKey,
+      parentKey,
+      relatedKey
+    );
+  }
+
+  /**
+   * Define a morphed-by-many relationship (inverse of morph-to-many)
+   * @example this.posts = this.morphedByMany(Post, 'taggables', 'taggable_type', 'taggable_id')
+   */
+  public morphedByMany<T extends Model>(
+    related: new () => T,
+    pivotTable: string,
+    morphTypeColumn: string = 'morphable_type',
+    morphIdColumn: string = 'morphable_id',
+    foreignPivotKey?: string,
+    relatedPivotKey?: string,
+    parentKey: string = 'id',
+    relatedKey: string = 'id'
+  ): MorphedByMany<T> {
+    return new MorphedByMany(
+      this,
+      related,
+      pivotTable,
+      morphTypeColumn,
+      morphIdColumn,
       foreignPivotKey,
       relatedPivotKey,
       parentKey,

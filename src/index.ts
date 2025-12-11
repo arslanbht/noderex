@@ -216,6 +216,11 @@ export { HasMany } from './app/Models/Relations/HasMany';
 export { BelongsTo } from './app/Models/Relations/BelongsTo';
 export { HasOne } from './app/Models/Relations/HasOne';
 export { BelongsToMany } from './app/Models/Relations/BelongsToMany';
+export { MorphTo } from './app/Models/Relations/MorphTo';
+export { MorphOne } from './app/Models/Relations/MorphOne';
+export { MorphMany } from './app/Models/Relations/MorphMany';
+export { MorphToMany } from './app/Models/Relations/MorphToMany';
+export { MorphedByMany } from './app/Models/Relations/MorphedByMany';
 
 // Export helper functions
 export {
