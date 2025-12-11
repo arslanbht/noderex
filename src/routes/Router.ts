@@ -86,6 +86,10 @@ export class Router {
    */
   public group(prefix: string, callback: (router: Router) => void, middleware: string[] = []): void {
     const groupRouter = new Router(this.app);
+    // Copy middleware map to child router so it can use parent middleware
+    this.middlewareMap.forEach((handler, name) => {
+      groupRouter.middlewareMap.set(name, handler);
+    });
     callback(groupRouter);
     
     // Apply prefix and middleware to all routes in the group
@@ -315,7 +319,6 @@ export class Router {
       
       for (const controllerPath of possiblePaths) {
         try {
-          console.log(`🔍 Trying to import controller from: ${controllerPath}`);
           module = await import(controllerPath);
           successfulPath = controllerPath;
           break;
@@ -332,11 +335,9 @@ export class Router {
       const ControllerClass = module[fileName] || module.default;
       
       if (!ControllerClass) {
-        console.error(`❌ Controller class not found in module: ${controllerName}`);
         return null;
       }
       
-      console.log(`✅ Successfully imported controller: ${controllerName} from ${successfulPath}`);
       return ControllerClass;
     } catch (error) {
       console.error(`❌ Failed to import controller ${controllerName}:`, error);

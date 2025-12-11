@@ -74,10 +74,17 @@ export abstract class Migration implements MigrationInterface {
    * Insert data into a table
    */
   protected insert(queryRunner: QueryRunner, tableName: string, data: Record<string, any>[]): Promise<void> {
-    const columns = Object.keys(data[0] || {});
+    if (!data || data.length === 0) {
+      return Promise.resolve();
+    }
+    
+    const driver = queryRunner.connection.driver;
+    const escapedTableName = this.escapeIdentifier(queryRunner, tableName);
+    const columns = Object.keys(data[0]);
+    const escapedColumns = columns.map(col => this.escapeIdentifier(queryRunner, col));
     const values = data.map(row => columns.map(col => row[col]));
     
-    const sql = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES ${values.map(() => `(${columns.map(() => '?').join(', ')})`).join(', ')}`;
+    const sql = `INSERT INTO ${escapedTableName} (${escapedColumns.join(', ')}) VALUES ${values.map(() => `(${columns.map(() => '?').join(', ')})`).join(', ')}`;
     const flatValues = values.flat();
     
     return queryRunner.query(sql, flatValues);
@@ -87,10 +94,12 @@ export abstract class Migration implements MigrationInterface {
    * Update data in a table
    */
   protected update(queryRunner: QueryRunner, tableName: string, data: Record<string, any>, where: Record<string, any>): Promise<void> {
-    const setClause = Object.keys(data).map(key => `${key} = ?`).join(', ');
-    const whereClause = Object.keys(where).map(key => `${key} = ?`).join(' AND ');
+    const driver = queryRunner.connection.driver;
+    const escapedTableName = this.escapeIdentifier(queryRunner, tableName);
+    const setClause = Object.keys(data).map(key => `${this.escapeIdentifier(queryRunner, key)} = ?`).join(', ');
+    const whereClause = Object.keys(where).map(key => `${this.escapeIdentifier(queryRunner, key)} = ?`).join(' AND ');
     
-    const sql = `UPDATE ${tableName} SET ${setClause} WHERE ${whereClause}`;
+    const sql = `UPDATE ${escapedTableName} SET ${setClause} WHERE ${whereClause}`;
     const parameters = [...Object.values(data), ...Object.values(where)];
     
     return queryRunner.query(sql, parameters);
@@ -100,34 +109,127 @@ export abstract class Migration implements MigrationInterface {
    * Delete data from a table
    */
   protected delete(queryRunner: QueryRunner, tableName: string, where: Record<string, any>): Promise<void> {
-    const whereClause = Object.keys(where).map(key => `${key} = ?`).join(' AND ');
-    const sql = `DELETE FROM ${tableName} WHERE ${whereClause}`;
+    const driver = queryRunner.connection.driver;
+    const escapedTableName = this.escapeIdentifier(queryRunner, tableName);
+    const whereClause = Object.keys(where).map(key => `${this.escapeIdentifier(queryRunner, key)} = ?`).join(' AND ');
+    const sql = `DELETE FROM ${escapedTableName} WHERE ${whereClause}`;
     
     return queryRunner.query(sql, Object.values(where));
   }
 
   /**
    * Check if a table exists
+   * Supports MySQL, PostgreSQL, and SQLite
    */
   protected async tableExists(queryRunner: QueryRunner, tableName: string): Promise<boolean> {
-    const result = await queryRunner.query(`SHOW TABLES LIKE '${tableName}'`);
-    return result.length > 0;
+    const driver = queryRunner.connection.driver;
+    const escapedTableName = this.escapeIdentifier(queryRunner, tableName);
+    
+    let query: string;
+    if (driver.options.type === 'postgres') {
+      query = `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = $1
+      )`;
+      const result = await queryRunner.query(query, [tableName]);
+      return result[0]?.exists === true;
+    } else if (driver.options.type === 'sqlite') {
+      query = `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`;
+      const result = await queryRunner.query(query, [tableName]);
+      return result.length > 0;
+    } else {
+      // MySQL/MariaDB
+      query = `SHOW TABLES LIKE ?`;
+      const result = await queryRunner.query(query, [tableName]);
+      return result.length > 0;
+    }
   }
 
   /**
    * Check if a column exists in a table
+   * Supports MySQL, PostgreSQL, and SQLite
    */
   protected async columnExists(queryRunner: QueryRunner, tableName: string, columnName: string): Promise<boolean> {
-    const result = await queryRunner.query(`SHOW COLUMNS FROM ${tableName} LIKE '${columnName}'`);
-    return result.length > 0;
+    const driver = queryRunner.connection.driver;
+    const escapedTableName = this.escapeIdentifier(queryRunner, tableName);
+    const escapedColumnName = this.escapeIdentifier(queryRunner, columnName);
+    
+    let query: string;
+    if (driver.options.type === 'postgres') {
+      query = `SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = $1 
+        AND column_name = $2
+      )`;
+      const result = await queryRunner.query(query, [tableName, columnName]);
+      return result[0]?.exists === true;
+    } else if (driver.options.type === 'sqlite') {
+      // SQLite PRAGMA doesn't support parameters, so we use escaped identifier
+      query = `PRAGMA table_info(${escapedTableName})`;
+      const result = await queryRunner.query(query);
+      return result.some((col: any) => col.name === columnName);
+    } else {
+      // MySQL/MariaDB
+      query = `SHOW COLUMNS FROM ${escapedTableName} LIKE ?`;
+      const result = await queryRunner.query(query, [columnName]);
+      return result.length > 0;
+    }
   }
 
   /**
    * Check if an index exists
+   * Supports MySQL, PostgreSQL, and SQLite
    */
   protected async indexExists(queryRunner: QueryRunner, tableName: string, indexName: string): Promise<boolean> {
-    const result = await queryRunner.query(`SHOW INDEX FROM ${tableName} WHERE Key_name = '${indexName}'`);
-    return result.length > 0;
+    const driver = queryRunner.connection.driver;
+    const escapedTableName = this.escapeIdentifier(queryRunner, tableName);
+    const escapedIndexName = this.escapeIdentifier(queryRunner, indexName);
+    
+    let query: string;
+    if (driver.options.type === 'postgres') {
+      query = `SELECT EXISTS (
+        SELECT FROM pg_indexes 
+        WHERE schemaname = 'public' 
+        AND tablename = $1 
+        AND indexname = $2
+      )`;
+      const result = await queryRunner.query(query, [tableName, indexName]);
+      return result[0]?.exists === true;
+    } else if (driver.options.type === 'sqlite') {
+      query = `SELECT name FROM sqlite_master WHERE type='index' AND tbl_name = ? AND name = ?`;
+      const result = await queryRunner.query(query, [tableName, indexName]);
+      return result.length > 0;
+    } else {
+      // MySQL/MariaDB
+      query = `SHOW INDEX FROM ${escapedTableName} WHERE Key_name = ?`;
+      const result = await queryRunner.query(query, [indexName]);
+      return result.length > 0;
+    }
+  }
+
+  /**
+   * Escape identifier for SQL injection prevention
+   */
+  private escapeIdentifier(queryRunner: QueryRunner, identifier: string): string {
+    const driver = queryRunner.connection.driver;
+    const dbType = driver.options.type;
+    
+    // Validate identifier contains only safe characters (alphanumeric, underscore)
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(identifier)) {
+      throw new Error(`Invalid identifier: ${identifier}. Identifiers must start with a letter or underscore and contain only alphanumeric characters and underscores.`);
+    }
+    
+    // Escape based on database type
+    if (dbType === 'postgres') {
+      return `"${identifier}"`;
+    } else if (dbType === 'sqlite') {
+      return `"${identifier}"`;
+    } else {
+      // MySQL/MariaDB
+      return `\`${identifier}\``;
+    }
   }
 }
 

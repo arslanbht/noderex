@@ -18,6 +18,8 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "baseUrl": "./",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["node"],
     "paths": {
       "@/*": ["src/*"],
       "@/app/*": ["src/app/*"],
