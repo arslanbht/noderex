@@ -1,9 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, BaseEntity } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, BaseEntity, getRepository } from 'typeorm';
 import 'reflect-metadata';
+import { HasMany } from './Relations/HasMany';
+import { BelongsTo } from './Relations/BelongsTo';
+import { HasOne } from './Relations/HasOne';
+import { BelongsToMany } from './Relations/BelongsToMany';
 
 /**
  * Base Model class for NodeRex framework
- * Provides common functionality for all models including timestamps
+ * Provides common functionality for all models including timestamps and relationships
  */
 @Entity()
 export abstract class Model extends BaseEntity {
@@ -15,6 +19,13 @@ export abstract class Model extends BaseEntity {
 
   @UpdateDateColumn()
   updated_at!: Date;
+
+  /**
+   * Get repository for this model
+   */
+  public static getRepository() {
+    return getRepository(this);
+  }
 
   /**
    * Fill the model with an array of attributes
@@ -77,5 +88,177 @@ export abstract class Model extends BaseEntity {
       delete json[attr];
     });
     return json;
+  }
+
+  /**
+   * Define a has-many relationship
+   * @example this.posts = this.hasMany(Post, 'user_id')
+   */
+  public hasMany<T extends Model>(
+    related: new () => T,
+    foreignKey?: string,
+    localKey: string = 'id'
+  ): HasMany<T> {
+    return new HasMany(this, related, foreignKey, localKey);
+  }
+
+  /**
+   * Define a belongs-to relationship
+   * @example this.user = this.belongsTo(User, 'user_id')
+   */
+  public belongsTo<T extends Model>(
+    related: new () => T,
+    foreignKey?: string,
+    ownerKey: string = 'id'
+  ): BelongsTo<T> {
+    return new BelongsTo(this, related, foreignKey, ownerKey);
+  }
+
+  /**
+   * Define a has-one relationship
+   * @example this.profile = this.hasOne(Profile, 'user_id')
+   */
+  public hasOne<T extends Model>(
+    related: new () => T,
+    foreignKey?: string,
+    localKey: string = 'id'
+  ): HasOne<T> {
+    return new HasOne(this, related, foreignKey, localKey);
+  }
+
+  /**
+   * Define a belongs-to-many relationship
+   * @example this.roles = this.belongsToMany(Role, 'user_roles', 'user_id', 'role_id')
+   */
+  public belongsToMany<T extends Model>(
+    related: new () => T,
+    pivotTable: string,
+    foreignPivotKey?: string,
+    relatedPivotKey?: string,
+    parentKey: string = 'id',
+    relatedKey: string = 'id'
+  ): BelongsToMany<T> {
+    return new BelongsToMany(
+      this,
+      related,
+      pivotTable,
+      foreignPivotKey,
+      relatedPivotKey,
+      parentKey,
+      relatedKey
+    );
+  }
+
+  /**
+   * Global scopes registry
+   */
+  private static globalScopes: Map<string, (query: any) => any> = new Map();
+
+  /**
+   * Local scopes registry
+   */
+  private localScopes: Map<string, (query: any) => any> = new Map();
+
+  /**
+   * Add a global scope
+   */
+  public static addGlobalScope(name: string, scope: (query: any) => any): void {
+    this.globalScopes.set(name, scope);
+  }
+
+  /**
+   * Remove a global scope
+   */
+  public static removeGlobalScope(name: string): void {
+    this.globalScopes.delete(name);
+  }
+
+  /**
+   * Add a local scope
+   */
+  public addScope(name: string, scope: (query: any) => any): void {
+    this.localScopes.set(name, scope);
+  }
+
+  /**
+   * Apply scopes to query builder
+   */
+  public static applyScopes(queryBuilder: any): any {
+    let query = queryBuilder;
+    
+    // Apply global scopes
+    this.globalScopes.forEach((scope) => {
+      query = scope(query);
+    });
+    
+    return query;
+  }
+
+  /**
+   * Apply local scopes to query builder
+   */
+  public applyLocalScopes(queryBuilder: any): any {
+    let query = queryBuilder;
+    
+    // Apply local scopes
+    this.localScopes.forEach((scope) => {
+      query = scope(query);
+    });
+    
+    return query;
+  }
+
+  /**
+   * Query builder with scopes applied
+   */
+  public static query(): any {
+    const repository = this.getRepository();
+    let queryBuilder = repository.createQueryBuilder();
+    
+    // Apply global scopes
+    queryBuilder = this.applyScopes(queryBuilder);
+    
+    return queryBuilder;
+  }
+
+  /**
+   * Scope query
+   */
+  public static scope(scopeName: string, ...args: any[]): any {
+    const repository = this.getRepository();
+    let queryBuilder = repository.createQueryBuilder();
+    
+    // Apply global scopes first
+    queryBuilder = this.applyScopes(queryBuilder);
+    
+    // Apply named scope if it exists as a static method
+    if (typeof (this as any)[scopeName] === 'function') {
+      queryBuilder = (this as any)[scopeName](queryBuilder, ...args);
+    }
+    
+    return queryBuilder;
+  }
+
+  /**
+   * Get query builder without global scopes
+   */
+  public static withoutGlobalScopes(...scopeNames: string[]): any {
+    const repository = this.getRepository();
+    const queryBuilder = repository.createQueryBuilder();
+    
+    // If specific scopes are provided, exclude only those
+    if (scopeNames.length > 0) {
+      const scopesToApply = new Map(this.globalScopes);
+      scopeNames.forEach(name => scopesToApply.delete(name));
+      
+      let query = queryBuilder;
+      scopesToApply.forEach((scope) => {
+        query = scope(query);
+      });
+      return query;
+    }
+    
+    // Otherwise, return query without any global scopes
+    return queryBuilder;
   }
 }

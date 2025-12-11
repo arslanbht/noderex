@@ -210,3 +210,9 @@ export {
   TooManyRequestsError,
   BadRequestError,
 } from './app/Middleware/ErrorHandler';
+
+// Export relationship classes
+export { HasMany } from './app/Models/Relations/HasMany';
+export { BelongsTo } from './app/Models/Relations/BelongsTo';
+export { HasOne } from './app/Models/Relations/HasOne';
+export { BelongsToMany } from './app/Models/Relations/BelongsToMany';
